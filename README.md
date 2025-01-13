@@ -10,3 +10,4 @@ Here are the available examples:
 - [File downloads](./file-download/)
 - [Websockets](./websockets/)
 - [Show progress when using async](./show-progress-async/)
+- [Live-Search](./live-search/)
