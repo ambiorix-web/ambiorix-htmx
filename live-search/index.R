@@ -144,7 +144,7 @@ search_get <- \(req, res) {
 error_handler <- \(req, res, error) {
   message(conditionMessage(error))
   res$status <- 500L
-  res$send("Internal Server Error :)")
+  res$send("Internal Server Error :(")
 }
 
 Ambiorix$new(port = 8000L)$
