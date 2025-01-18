@@ -73,8 +73,13 @@ html_page <- \(head = NULL, body = NULL) {
       ),
       tags$link(
         rel = "stylesheet",
+        href = "/assets/styles.css"
+      ),
+      tags$link(
+        rel = "stylesheet",
         href = "/assets/pico-2.0.6.min.css"
       ),
+      tags$script(src = "/assets/htmx-2.0.4.min.js"),
       head
     ),
     tags$body(body)
@@ -84,13 +89,58 @@ html_page <- \(head = NULL, body = NULL) {
 #' Create an HTML table
 #'
 #' @param data data.frame object to use.
-#' @return [htmltools::tags$table]
+#' @param next_page Integer. The next page number.
+#' Passed to `hx-get` of the last table row.
+#' Default is NULL.
+#' @param type Type of data to return. Either
+#' "full" (default) to return the full html table,
+#' or "records" to return the rows alone.
+#' @return [htmltools::tags]
 #' @export
-html_table <- \(data) {
-  rows <- nrow(data)
-  cols <- ncol(data)
+html_table <- \(
+  data,
+  next_page = NULL,
+  type = c("full", "records")
+) {
+  type <- match.arg(arg = type)
+  nrows <- nrow(data)
+  ncols <- ncol(data)
   row_names <- rownames(data)
   data <- as.list(data)
+
+
+  table_records <- lapply(
+    X = seq_len(nrows),
+    FUN = \(row_idx) {
+      cell_data <- lapply(
+        X = seq_len(ncols),
+        FUN = \(col_idx) {
+          tags$td(
+            data[[col_idx]][[row_idx]]
+          )
+        }
+      )
+
+      is_last_row <- identical(row_idx, nrows) && !is.null(next_page)
+      hx_get <- if (is_last_row) paste0("/babynames?page=", next_page)
+
+      tags$tr(
+        `hx-get` = hx_get,
+        `hx-trigger` = "revealed",
+        `hx-swap` = "afterend",
+        `hx-indicator` = "#babynames-loading-spinner",
+        tags$th(
+          scope = "row",
+          row_names[[row_idx]]
+        ),
+        cell_data
+      )
+    }
+  )
+
+  if (identical(type, "records")) {
+    return(table_records)
+  }
 
   table_head <- tags$thead(
     tags$tr(
@@ -106,31 +156,24 @@ html_table <- \(data) {
     )
   )
 
-  table_records <- lapply(
-    X = seq_len(rows),
-    FUN = \(row_idx) {
-      cell_data <- lapply(
-        X = seq_len(cols),
-        FUN = \(col_idx) {
-          tags$td(data[[col_idx]][[row_idx]])
-        }
-      )
-
-      tags$tr(
-        tags$th(
-          scope = "row",
-          row_names[[row_idx]]
-        ),
-        cell_data
-      )
-    }
-  )
-
   table_body <- tags$tbody(table_records)
 
-  tags$table(
+  table <- tags$table(
+    class = "striped",
     table_head,
     table_body
+  )
+
+  loading_spinner <- tags$div(
+    id = "babynames-loading-spinner",
+    class = "htmx-indicator",
+    `aria-busy` = "true"
+  )
+
+  tags$article(
+    tags$header("Babynames"),
+    tags$main(table),
+    tags$footer(loading_spinner)
   )
 }
 
@@ -138,8 +181,11 @@ html_table <- \(data) {
 #'
 #' @export
 home_page <- \() {
-  first_fifteen <- filter_babynames()$filtered
-  table <- html_table(data = first_fifteen)
+  first_fifteen <- filter_babynames()
+  table <- html_table(
+    data = first_fifteen$filtered,
+    next_page = first_fifteen$next_page
+  )
 
   body <- tagList(
     tags$header(
@@ -155,7 +201,7 @@ home_page <- \() {
     ),
     tags$footer(
       class = "container",
-      tags$p("courtesy of ambiorix + htmx🚀")
+      tags$p("ambiorix + htmx🚀")
     )
   )
 
@@ -167,6 +213,26 @@ home_page <- \() {
 #' @export
 home_get <- \(req, res) {
   res$send(home_page())
+}
+
+#' Handle GET at '/babynames'
+#'
+#' @export
+get_babynames <- \(req, res) {
+  page <- as.integer(req$query$page)
+  data <- filter_babynames(page = page)
+  html <- tagList(
+    html_table(
+      data = data$filtered,
+      next_page = data$next_page,
+      type = "records"
+    )
+  )
+
+  # simulate a short delay so that spinner can be seen, lol:
+  Sys.sleep(0.5)
+
+  res$send(html)
 }
 
 #' Global error handler for app
@@ -185,4 +251,5 @@ Ambiorix$new(port = 5000L)$
   set_error(error_handler)$
   static("public", "assets")$
   get("/", home_get)$
+  get("/babynames", get_babynames)$
   start()
