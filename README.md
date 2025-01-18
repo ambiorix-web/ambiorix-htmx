@@ -11,3 +11,4 @@ Here are the available examples:
 - [Websockets](./websockets/)
 - [Show progress when using async](./show-progress-async/)
 - [Live-Search](./live-search/)
+- [Infinite Scroll](./infinite-scroll/)
