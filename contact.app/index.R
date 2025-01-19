@@ -116,6 +116,46 @@ html_page <- \(head = NULL, body = NULL) {
   )
 }
 
+#' Create search input fields for contacts table
+#'
+#' @export
+create_search_input_fields <- \() {
+  input_ids <- paste0(names(contacts), "_pattern")
+  placeholders <- c(
+    "First Name",
+    "Last Name",
+    "Phone Number",
+    "Email Address"
+  )
+
+  inputs <- Map(
+    f = \(id, placeholder) {
+      hx_include <- paste("#", setdiff(input_ids, id), collapse = ",")
+
+      tags$input(
+        type = "search",
+        name = id,
+        id = id,
+        `hx-post` = "/search-contacts",
+        `hx-include` = hx_include,
+        `hx-target` = "#contacts_table",
+        `hx-swap` = "outerHTML",
+        `hx-trigger` = "input changed delay:500ms, search",
+        placeholder = placeholder
+      )
+    },
+    input_ids,
+    placeholders
+  )
+
+  tags$form(
+    tags$fieldset(
+      class = "grid",
+      inputs
+    )
+  )
+}
+
 #' Create an HTML table
 #'
 #' @param data data.frame object to use.
@@ -172,15 +212,27 @@ html_table <- \(
     return(table_records)
   }
 
+  col_names <- c("#", names(data))
+
   table_head <- tags$thead(
     tags$tr(
       lapply(
-        X = c("#", names(data)),
+        X = col_names,
         FUN = \(col_name) {
           tags$th(
             scope = "col",
             col_name
           )
+        }
+      )
+    ),
+    tags$tr(
+      lapply(
+        X = col_names,
+        FUN = \(col_name) {
+          if (identical(col_name, "#")) {
+            return(tags$th())
+          }
         }
       )
     )
@@ -189,6 +241,7 @@ html_table <- \(
   table_body <- tags$tbody(table_records)
 
   table <- tags$table(
+    id = "contacts_table",
     class = "striped",
     table_head,
     table_body
@@ -202,7 +255,10 @@ html_table <- \(
 
   tags$article(
     tags$header("Contacts"),
-    tags$main(table),
+    tags$main(
+      create_search_input_fields(),
+      table
+    ),
     tags$footer(loading_spinner)
   )
 }
