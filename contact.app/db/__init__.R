@@ -6,6 +6,6 @@ box::use(
     delete_contact,
     update_contact,
     read_all_contacts,
-    create_new_contact,
+    create_contact,
   ],
 )

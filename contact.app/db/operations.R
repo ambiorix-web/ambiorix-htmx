@@ -191,7 +191,7 @@ read_all_contacts <- \(
 #' @return data.frame containing details
 #' of the new contact.
 #' @export
-create_new_contact <- \(
+create_contact <- \(
   first_name,
   last_name,
   phone_number,
