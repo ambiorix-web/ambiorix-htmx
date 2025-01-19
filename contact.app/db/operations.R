@@ -136,3 +136,33 @@ read_all_contacts <- \(
 
   found
 }
+
+#' Read a specific contact
+#'
+#' @param id String. Contact ID.
+#' @return data.frame
+#' @export
+read_contact <- \(id) {
+  params <- list(id)
+
+  query <- "
+    SELECT
+      id,
+      first_name,
+      last_name,
+      phone_number,
+      email_address
+    FROM contacts
+    WHERE id = ?
+    "
+
+  conn <- make_conn()
+  on.exit(dbDisconnect(conn))
+
+  res <- dbSendQuery(conn = conn, statement = query)
+  dbBind(res = res, params = params)
+  found <- dbFetch(res = res)
+  dbClearResult(res)
+
+  found
+}
