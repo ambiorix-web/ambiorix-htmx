@@ -74,13 +74,21 @@ make_conn <- \() {
 #' in the phone number.
 #' @param email_address_pattern String. Pattern to search for
 #' in the email address.
-#' @return data.frame
+#' @param page Integer. Page number to read. Default is 1.
+#' @parm page_length Integer. How many records per page?
+#' Default is 15.
+#' @return Named list:
+#' - `filtered`: data.frame. The filtered records.
+#' - `next_page`: Integer. Next page. `NULL` if at the end
+#' of records.
 #' @export
 read_all_contacts <- \(
   first_name_pattern = "",
   last_name_pattern = "",
   phone_number_pattern = "",
-  email_address_pattern = ""
+  email_address_pattern = "",
+  page = 1L,
+  page_length = 15L
 ) {
   patterns <- list(
     first_name = first_name_pattern,
@@ -91,6 +99,8 @@ read_all_contacts <- \(
 
   where_conditions <- NULL
   where_values <- list()
+  where_clause <- NULL
+
   for (i in seq_along(patterns)) {
     name <- names(patterns)[[i]]
     value <- patterns[[i]]
@@ -128,6 +138,37 @@ read_all_contacts <- \(
   conn <- make_conn()
   on.exit(dbDisconnect(conn))
 
+  # pagination
+  count_query <- paste(
+    "SELECT COUNT(*) AS n FROM contacts",
+    where_clause
+  )
+  res <- dbSendQuery(conn = conn, statement = count_query)
+  if (!is.null(where_conditions)) {
+    dbBind(res = res, params = where_values)
+  }
+  found <- dbFetch(res = res)
+  dbClearResult(res)
+  n <- as.integer(found[["n"]])
+
+  start_idx <- (page - 1L) * page_length + 1L
+  if (start_idx > n) {
+    return(
+      list(
+        filtered = NULL,
+        next_page = NULL
+      )
+    )
+  }
+
+  end_idx <- min(page * page_length, n) |> as.integer()
+  is_last_page <- identical(end_idx, n) || n <= page_length
+  next_page <- if (!is_last_page) page + 1L
+
+  limit <- page_length
+  offset <- start_idx - 1L
+  query <- paste(query, "LIMIT", limit, "OFFSET", offset)
+
   res <- dbSendQuery(conn = conn, statement = query)
   if (!is.null(where_conditions)) {
     dbBind(res = res, params = where_values)
@@ -135,7 +176,10 @@ read_all_contacts <- \(
   found <- dbFetch(res = res)
   dbClearResult(res)
 
-  found
+  list(
+    filtered = found,
+    next_page = next_page
+  )
 }
 
 #' Create new contact
