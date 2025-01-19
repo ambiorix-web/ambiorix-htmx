@@ -272,3 +272,28 @@ update_contact <- \(
 
   read_contact(id = id)
 }
+
+#' Delete a contact
+#'
+#' @param id Contact ID.
+#' @return data.frame containing details of
+#' the deleted contact.
+#' @export
+delete_contact <- \(id) {
+  details <- read_contact(id = id)
+
+  not_found <- identical(nrow(details), 0L)
+  if (not_found) {
+    return(details)
+  }
+
+  query <- "DELETE FROM contacts WHERE id = ?"
+  params <- list(id)
+
+  conn <- make_conn()
+  on.exit(dbDisconnect(conn))
+
+  dbExecute(conn = conn, statement = query, params = params)
+
+  details
+}
