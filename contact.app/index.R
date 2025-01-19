@@ -7,6 +7,7 @@ box::use(
   ],
   tools[toTitleCase],
   htmltools[tags, tagList],
+  . / utils[parse_req],
 )
 
 # generate some fake data to use:
@@ -81,6 +82,36 @@ filter_contacts <- \(
   )
 }
 
+#' Add a new contact
+#'
+#' Adds a new contact with the provided details
+#' and modifies the object 'contacts' globally.
+#'
+#' @param first_name String. First name.
+#' @param last_name String. Last name.
+#' @param phone_number String. Phone number.
+#' @param email_address String. Email address.
+#' @return data.frame. The newly added record.
+#' @export
+add_new_contact <- \(
+  first_name,
+  last_name,
+  phone_number,
+  email_address
+) {
+  record <- data.frame(
+    first_name = first_name,
+    last_name = last_name,
+    phone_number = phone_number,
+    email_address = email_address
+  )
+
+  contacts <<- rbind(contacts, record)
+
+  record
+}
+
+
 #' Create a generic HTML page
 #'
 #' @param head [htmltools::tagList()] Tag list containing
@@ -100,10 +131,6 @@ html_page <- \(head = NULL, body = NULL) {
       tags$title("Contact.app"),
       tags$link(
         rel = "stylesheet",
-        href = "/assets/styles.css"
-      ),
-      tags$link(
-        rel = "stylesheet",
         href = "/assets/bootstrap-5.3.3.min.css"
       ),
       tags$link(
@@ -111,13 +138,84 @@ html_page <- \(head = NULL, body = NULL) {
         href = "/assets/bootstrap-icons-1.11.3/bootstrap-icons.min.css"
       ),
       tags$script(src = "/assets/htmx-2.0.4.min.js"),
+      tags$link(
+        rel = "stylesheet",
+        href = "/assets/styles.css"
+      ),
       head
     ),
     tags$body(
       class = "raleway",
+      `hx-encoding` = "multipart/form-data",
       body,
       tags$script(src = "/assets/bootstrap-5.3.3.bundle.min.js")
     )
+  )
+}
+
+#' New contact form
+#'
+#' @export
+new_contact_form <- \() {
+  label <- tags$label(
+    `for` = "n"
+  )
+  input <- tags$input(
+    class = "form-control",
+    type = "text",
+  )
+
+  labels <- c("First Name", "Last Name", "Phone Number", "Email Address")
+  ids <- c("first_name", "last_name", "phone_number", "email_address")
+  types <- c("text", "text", "tel", "email")
+  placeholders <- c("John", "Doe", "+254712345678", "johndoe@mail.com")
+
+  inputs <- Map(
+    f = \(id, type, label, placeholder) {
+      lbl <- tags$label(
+        `for` = id,
+        class = "form-label",
+        label
+      )
+
+      input <- tags$input(
+        class = "form-control",
+        id = id,
+        name = id,
+        type = type,
+        placeholder = placeholder
+      )
+
+      tags$div(
+        class = "mb-3",
+        lbl,
+        input
+      )
+    },
+    ids, types, labels, placeholders
+  )
+
+  btns <- tags$div(
+    class = "d-flex justify-content-between",
+    tags$button(
+      type = "button",
+      class = "btn btn-danger btn-sm",
+      "Cancel"
+    ),
+    tags$button(
+      type = "submit",
+      class = "btn btn-success btn-sm",
+      "Save Contact"
+    )
+  )
+
+  tags$form(
+    `hx-post` = "/contacts",
+    `hx-target` = "#contacts_table",
+    `hx-swap` = "outerHTML",
+    `hx-on::after-request` = "this.reset()",
+    inputs,
+    btns
   )
 }
 
@@ -270,16 +368,23 @@ contacts_table <- \(
   table_body <- tags$tbody(table_records)
 
   table <- tags$div(
+    id = "contacts_table",
     class = "table-responsive",
     tags$table(
-      id = "contacts_table",
       class = "table table-sm table-hover table-bordered",
       table_head,
       table_body
     )
   )
 
-  loading_spinner <- tags$div(
+  table
+}
+
+#' Contacts loading spinner
+#'
+#' @export
+contacts_loading_spinner <- \() {
+  tags$div(
     id = "contacts-loading-spinner",
     class = "d-flex justify-content-center htmx-indicator",
     tags$div(
@@ -290,11 +395,6 @@ contacts_table <- \(
         "Loading..."
       )
     )
-  )
-
-  tagList(
-    table,
-    loading_spinner
   )
 }
 
@@ -316,8 +416,10 @@ home_page <- \() {
     ),
     tags$main(
       class = "container",
+      new_contact_form(),
       create_search_fields(),
-      table
+      table,
+      contacts_loading_spinner()
     ),
     tags$footer(
       class = "container",
@@ -355,6 +457,30 @@ get_contacts <- \(req, res) {
   res$send(html)
 }
 
+#' Handle POST at '/contacts'
+#'
+#' @export
+create_contact <- \(req, res) {
+  field_names <- c("first_name", "last_name", "phone_number", "email_address")
+  body <- parse_req(req, fields_to_extract = field_names)
+
+  add_new_contact(
+    first_name = body[["first_name"]],
+    last_name = body[["last_name"]],
+    phone_number = body[["phone_number"]],
+    email_address = body[["email_address"]]
+  )
+
+  data <- filter_contacts(page = 1L)
+  html <- contacts_table(
+    data = data$filtered,
+    next_page = data$next_page,
+    type = "full"
+  )
+
+  res$send(html)
+}
+
 #' Global error handler for app
 #'
 #' @param req The request object.
@@ -372,4 +498,5 @@ Ambiorix$new(port = 5000L)$
   static("public", "assets")$
   get("/", home_get)$
   get("/contacts", get_contacts)$
+  post("/contacts", create_contact)$
   start()

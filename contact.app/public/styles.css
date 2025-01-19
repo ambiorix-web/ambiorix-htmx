@@ -19,7 +19,7 @@
   src: url('./fonts/raleway-v34-latin-italic.woff2') format('woff2'); /* Chrome 36+, Opera 23+, Firefox 39+, Safari 12+, iOS 10+ */
 }
 
-.raleway {
+body {
   font-family: "Raleway", sans-serif;
 }
 
