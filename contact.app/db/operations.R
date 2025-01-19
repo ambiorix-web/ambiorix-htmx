@@ -137,6 +137,45 @@ read_all_contacts <- \(
   found
 }
 
+#' Create new contact
+#'
+#' @param first_name String.
+#' @param last_name String.
+#' @param phone_number String.
+#' @param email_address String.
+#' @return data.frame containing details
+#' of the new contact.
+#' @export
+create_new_contact <- \(
+  first_name,
+  last_name,
+  phone_number,
+  email_address
+) {
+  id <- UUIDgenerate(n = 1L)
+
+  record <- data.frame(
+    id = id,
+    first_name = first_name,
+    last_name = last_name,
+    phone_number = phone_number,
+    email_address = email_address
+  )
+
+  conn <- make_conn()
+  on.exit(dbDisconnect(conn))
+
+  dbWriteTable(
+    conn = conn,
+    name = "contacts",
+    value = record,
+    overwrite = FALSE,
+    append = TRUE
+  )
+
+  read_contact(id = id)
+}
+
 #' Read a specific contact
 #'
 #' @param id String. Contact ID.

@@ -4,5 +4,6 @@ box::use(
     seed_db,
     read_contact,
     read_all_contacts,
+    create_new_contact,
   ],
 )
