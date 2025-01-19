@@ -3,6 +3,7 @@ box::use(
     dbBind,
     dbFetch,
     dbConnect,
+    dbExecute,
     dbSendQuery,
     dbWriteTable,
     dbDisconnect,
@@ -204,4 +205,70 @@ read_contact <- \(id) {
   dbClearResult(res)
 
   found
+}
+
+#' Update an existing contact
+#'
+#' @param id String. Contact ID.
+#' @param new_first_name String.
+#' @param new_last_name String.
+#' @param new_phone_number String.
+#' @param new_email_address String.
+#' @return data.frame containing details of
+#' the updated contact.
+#' @export
+update_contact <- \(
+  id,
+  new_first_name = NULL,
+  new_last_name = NULL,
+  new_phone_number = NULL,
+  new_email_address = NULL
+) {
+  set_statements <- c(
+    if (!is.null(new_first_name)) {
+      "first_name = ?"
+    },
+    if (!is.null(new_last_name)) {
+      "last_name = ?"
+    },
+    if (!is.null(new_phone_number)) {
+      "phone_number = ?"
+    },
+    if (!is.null(new_email_address)) {
+      "email_address = ?"
+    }
+  )
+
+  if (is.null(set_statements)) {
+    return(
+      read_contact(id = id)
+    )
+  }
+
+  set_clause <- paste(
+    "SET",
+    paste(set_statements, collapse = ", ")
+  )
+
+  query <- "
+    UPDATE contacts
+    WHERE id = ?
+    "
+  query <- paste("UPDATE contacts", set_clause, "WHERE id = ?")
+
+  params <- c(
+    new_first_name,
+    new_last_name,
+    new_phone_number,
+    new_email_address,
+    id
+  ) |>
+    as.list()
+
+  conn <- make_conn()
+  on.exit(dbDisconnect(conn))
+
+  dbExecute(conn = conn, statement = query, params = params)
+
+  read_contact(id = id)
 }
