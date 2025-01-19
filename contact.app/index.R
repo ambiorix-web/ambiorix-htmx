@@ -5,6 +5,7 @@ box::use(
     r_phone_numbers,
     r_email_addresses,
   ],
+  tools[toTitleCase],
   htmltools[tags, tagList],
 )
 
@@ -96,10 +97,6 @@ html_page <- \(head = NULL, body = NULL) {
         name = "viewport",
         content = "width=device-width, initial-scale=1"
       ),
-      tags$meta(
-        name = "color-scheme",
-        content = "light dark"
-      ),
       tags$title("Contact.app"),
       tags$link(
         rel = "stylesheet",
@@ -107,35 +104,47 @@ html_page <- \(head = NULL, body = NULL) {
       ),
       tags$link(
         rel = "stylesheet",
-        href = "/assets/pico-2.0.6.min.css"
+        href = "/assets/bootstrap-5.3.3.min.css"
+      ),
+      tags$link(
+        rel = "stylesheet",
+        href = "/assets/bootstrap-icons-1.11.3/bootstrap-icons.min.css"
       ),
       tags$script(src = "/assets/htmx-2.0.4.min.js"),
       head
     ),
-    tags$body(body)
+    tags$body(
+      class = "raleway",
+      body,
+      tags$script(src = "/assets/bootstrap-5.3.3.bundle.min.js")
+    )
   )
 }
 
 #' Create search input fields for contacts table
 #'
 #' @export
-create_search_input_fields <- \() {
+create_search_fields <- \() {
   input_ids <- paste0(names(contacts), "_pattern")
-  placeholders <- c(
-    "First Name",
-    "Last Name",
-    "Phone Number",
-    "Email Address"
+  placeholders <- paste(
+    "Search by",
+    c(
+      "first name",
+      "last name",
+      "phone number",
+      "email address"
+    )
   )
 
   inputs <- Map(
     f = \(id, placeholder) {
-      hx_include <- paste("#", setdiff(input_ids, id), collapse = ",")
+      hx_include <- paste0("#", setdiff(input_ids, id), collapse = ",")
 
-      tags$input(
-        type = "search",
+      input <- tags$input(
         name = id,
         id = id,
+        class = "form-control form-control-sm",
+        type = "search",
         `hx-post` = "/search-contacts",
         `hx-include` = hx_include,
         `hx-target` = "#contacts_table",
@@ -143,20 +152,25 @@ create_search_input_fields <- \() {
         `hx-trigger` = "input changed delay:500ms, search",
         placeholder = placeholder
       )
+
+      tags$div(
+        class = "col-12 col-md-6 col-lg-3",
+        input
+      )
     },
     input_ids,
     placeholders
   )
 
   tags$form(
-    tags$fieldset(
-      class = "grid",
+    tags$div(
+      class = "row",
       inputs
     )
   )
 }
 
-#' Create an HTML table
+#' Create the contacts HTML table
 #'
 #' @param data data.frame object to use.
 #' @param next_page Integer. The next page number.
@@ -167,17 +181,39 @@ create_search_input_fields <- \() {
 #' or "records" to return the rows alone.
 #' @return [htmltools::tags]
 #' @export
-html_table <- \(
+contacts_table <- \(
   data,
   next_page = NULL,
   type = c("full", "records")
 ) {
   type <- match.arg(arg = type)
+
   nrows <- nrow(data)
+  data[["Action"]] <- lapply(
+    X = seq_len(nrows),
+    FUN = \(row_idx) {
+      tags$div(
+        class = "btn-group btn-group-sm",
+        role = "group",
+        `aria-label` = "Action",
+        tags$button(
+          type = "button",
+          class = "btn btn-outline-dark",
+          tags$i(class = "bi bi-pencil-square"),
+          "Edit"
+        ),
+        tags$button(
+          type = "button",
+          class = "btn btn-outline-danger",
+          tags$i(class = "bi bi-trash3"),
+          "Delete"
+        )
+      )
+    }
+  )
+
   ncols <- ncol(data)
   row_names <- rownames(data)
-  data <- as.list(data)
-
 
   table_records <- lapply(
     X = seq_len(nrows),
@@ -195,6 +231,7 @@ html_table <- \(
       hx_get <- if (is_last_row) paste0("/contacts?page=", next_page)
 
       tags$tr(
+        class = "align-middle",
         `hx-get` = hx_get,
         `hx-trigger` = "revealed",
         `hx-swap` = "afterend",
@@ -212,7 +249,9 @@ html_table <- \(
     return(table_records)
   }
 
-  col_names <- c("#", names(data))
+  col_names <- c("#", names(data)) |>
+    gsub(pattern = "_", replacement = " ") |>
+    toTitleCase()
 
   table_head <- tags$thead(
     tags$tr(
@@ -225,41 +264,37 @@ html_table <- \(
           )
         }
       )
-    ),
-    tags$tr(
-      lapply(
-        X = col_names,
-        FUN = \(col_name) {
-          if (identical(col_name, "#")) {
-            return(tags$th())
-          }
-        }
-      )
     )
   )
 
   table_body <- tags$tbody(table_records)
 
-  table <- tags$table(
-    id = "contacts_table",
-    class = "striped",
-    table_head,
-    table_body
+  table <- tags$div(
+    class = "table-responsive",
+    tags$table(
+      id = "contacts_table",
+      class = "table table-sm table-hover table-bordered",
+      table_head,
+      table_body
+    )
   )
 
   loading_spinner <- tags$div(
     id = "contacts-loading-spinner",
-    class = "htmx-indicator",
-    `aria-busy` = "true"
+    class = "d-flex justify-content-center htmx-indicator",
+    tags$div(
+      class = "spinner-border spinner-border-sm",
+      role = "status",
+      tags$span(
+        class = "visually-hidden",
+        "Loading..."
+      )
+    )
   )
 
-  tags$article(
-    tags$header("Contacts"),
-    tags$main(
-      create_search_input_fields(),
-      table
-    ),
-    tags$footer(loading_spinner)
+  tagList(
+    table,
+    loading_spinner
   )
 }
 
@@ -268,7 +303,7 @@ html_table <- \(
 #' @export
 home_page <- \() {
   first_fifteen <- filter_contacts()
-  table <- html_table(
+  table <- contacts_table(
     data = first_fifteen$filtered,
     next_page = first_fifteen$next_page
   )
@@ -276,13 +311,12 @@ home_page <- \() {
   body <- tagList(
     tags$header(
       class = "container",
-      tags$hgroup(
-        tags$h2("Contacts.app"),
-        tags$p("Create, Read, Update & Delete Contacts")
-      )
+      tags$h2("Contacts.app"),
+      tags$p("Create, Read, Update & Delete Contacts")
     ),
     tags$main(
       class = "container",
+      create_search_fields(),
       table
     ),
     tags$footer(
@@ -308,7 +342,7 @@ get_contacts <- \(req, res) {
   page <- as.integer(req$query$page)
   data <- filter_contacts(page = page)
   html <- tagList(
-    html_table(
+    contacts_table(
       data = data$filtered,
       next_page = data$next_page,
       type = "records"
