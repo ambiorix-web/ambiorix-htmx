@@ -20,6 +20,7 @@ contacts_table <- \(
   type = c("full", "records")
 ) {
   type <- match.arg(arg = type)
+  data[["id"]] <- NULL
 
   nrows <- nrow(data)
   data[["Action"]] <- lapply(

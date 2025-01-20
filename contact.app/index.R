@@ -44,8 +44,14 @@ contact_get <- \(req, res) {
 #'
 #' @export
 contact_post <- \(req, res) {
-  field_names <- c("first_name", "last_name", "phone_number", "email_address")
-  body <- parse_req(req, fields_to_extract = field_names)
+  new_field_names <- c("first_name", "last_name", "phone_number", "email_address")
+  field_names <- paste0("new_contact_", new_field_names)
+
+  body <- parse_req(
+    req = req,
+    fields_to_extract = field_names,
+    new_field_names = new_field_names
+  )
 
   create_contact(
     first_name = body[["first_name"]],

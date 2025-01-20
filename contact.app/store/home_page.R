@@ -3,6 +3,7 @@ box::use(
   . / html_page[html_page],
   . / contacts_table[contacts_table],
   . / new_contact_form[new_contact_form],
+  . / create_contact_btn[create_contact_btn],
   . / contact_search_fields[contact_search_fields],
   . / contacts_loading_spinner[contacts_loading_spinner],
   .. / db[read_all_contacts],
@@ -26,7 +27,7 @@ home_page <- \() {
     ),
     tags$main(
       class = "container",
-      new_contact_form(),
+      create_contact_btn(),
       contact_search_fields(),
       table,
       contacts_loading_spinner()
