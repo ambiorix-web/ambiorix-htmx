@@ -1,6 +1,7 @@
 box::use(
   tools[toTitleCase],
   htmltools[tags, tagList],
+  . / contact_table_action_btns[contact_table_action_btns],
 )
 
 #' Create the contacts HTML table
@@ -20,29 +21,12 @@ contacts_table <- \(
   type = c("full", "records")
 ) {
   type <- match.arg(arg = type)
-  data[["id"]] <- NULL
 
   nrows <- nrow(data)
   data[["Action"]] <- lapply(
     X = seq_len(nrows),
     FUN = \(row_idx) {
-      tags$div(
-        class = "btn-group btn-group-sm",
-        role = "group",
-        `aria-label` = "Action",
-        tags$button(
-          type = "button",
-          class = "btn btn-outline-dark",
-          tags$i(class = "bi bi-pencil-square"),
-          "Edit"
-        ),
-        tags$button(
-          type = "button",
-          class = "btn btn-outline-danger",
-          tags$i(class = "bi bi-trash3"),
-          "Delete"
-        )
-      )
+      contact_table_action_btns(data = data[row_idx, ])
     }
   )
 
@@ -65,7 +49,7 @@ contacts_table <- \(
       hx_get <- if (is_last_row) paste0("/contacts?page=", next_page)
 
       tags$tr(
-        class = "align-middle",
+        class = "align-middle fw-light",
         `hx-get` = hx_get,
         `hx-trigger` = "revealed",
         `hx-swap` = "afterend",

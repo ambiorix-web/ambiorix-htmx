@@ -2,37 +2,54 @@ box::use(
   htmltools[tags, tagList],
 )
 
-#' Create new contact button
+#' Edit contact button
 #'
+#' @param data data.frame. Data of the record to edit.
 #' @return [htmltools::tagList()]. The button to
-#' create a new contact and the associated modal
+#' edit the contact and the associated modal
 #' dialog.
 #' @export
-create_contact_btn <- \() {
-  btn <- tags$button(
-    class = "btn btn-sm btn-primary mb-3",
-    `data-bs-toggle` = "modal",
-    `data-bs-target` = "#modal_create_contact",
-    tags$i(class = "bi bi-plus-lg"),
-    "Add New Contact"
+edit_contact_btn <- \(data) {
+  data_id <- data[["id"]]
+  modal_id <- paste0("modal_edit_contact_", data_id)
+
+  btn <- tags$div(
+    class = "btn-group btn-group-sm",
+    role = "group",
+    `aria-label` = "Action",
   )
+
+  btn <- tags$button(
+    type = "button",
+    class = "btn btn-outline-dark",
+    `data-bs-toggle` = "modal",
+    `data-bs-target` = paste0("#", modal_id),
+    tags$i(class = "bi bi-pencil-square"),
+    "Edit"
+  )
+
 
   tagList(
     btn,
-    modal_new_contact()
+    modal_edit_contact(data = data)
   )
 }
 
-#' Add new contact modal dialog
+#' Edit contact modal dialog
 #'
+#' @param data data.frame. Data of the record to edit.
 #' @return [htmltools::tags]
-modal_new_contact <- \() {
+modal_edit_contact <- \(data) {
+  data_id <- data[["id"]]
+  modal_id <- paste0("modal_edit_contact_", data_id)
+  header_id <- paste0("modal_edit_contact_header_", data_id)
+
   header <- tags$div(
     class = "modal-header py-2",
     tags$h1(
       class = "modal-title fs-5 fw-bold",
-      id = "modal_create_contact_header",
-      "Add New Contact"
+      id = header_id,
+      "Edit Contact"
     ),
     tags$button(
       type = "button",
@@ -43,14 +60,22 @@ modal_new_contact <- \() {
   )
 
   input_ids <- paste0(
-    "new_contact_",
-    c("first_name", "last_name", "phone_number", "email_address")
+    "edit_contact_",
+    c("first_name", "last_name", "phone_number", "email_address"),
+    "_",
+    data_id
+  )
+  values <- c(
+    data[["first_name"]],
+    data[["last_name"]],
+    data[["phone_number"]],
+    data[["email_address"]]
   )
   types <- c("text", "text", "tel", "email")
   labels <- c("First Name", "Last Name", "Phone Number", "Email Address")
 
   inputs <- Map(
-    f = \(id, type, label) {
+    f = \(id, value, type, label) {
       lbl <- tags$label(
         `for` = id,
         class = "form-label",
@@ -62,7 +87,8 @@ modal_new_contact <- \() {
         id = id,
         name = id,
         class = "form-control",
-        required = NA
+        required = NA,
+        value = value
       )
 
       tags$div(
@@ -71,7 +97,7 @@ modal_new_contact <- \() {
         input
       )
     },
-    input_ids, types, labels
+    input_ids, values, types, labels
   )
 
   btns <- tags$div(
@@ -85,18 +111,19 @@ modal_new_contact <- \() {
     tags$button(
       type = "submit",
       class = "btn btn-sm btn-success",
-      "Add contact"
+      "Save changes"
     )
   )
+
+  hx_put <- paste0("/contacts/", data[["id"]])
 
   body <- tags$div(
     class = "modal-body",
     tags$form(
       class = "mb-0",
-      `hx-post` = "/contacts",
+      `hx-put` = hx_put,
       `hx-target` = "#contacts_table",
       `hx-swap` = "outerHTML",
-      `hx-on::after-request` = "this.reset()",
       inputs,
       btns
     )
@@ -104,9 +131,9 @@ modal_new_contact <- \() {
 
   tags$div(
     class = "modal fade",
-    id = "modal_create_contact",
+    id = modal_id,
     tabindex = "-1",
-    `aria-labelledby` = "modal_create_contact_header",
+    `aria-labelledby` = header_id,
     `aria-hidden` = "true",
     tags$div(
       class = "modal-dialog modal-dialog-centered",
