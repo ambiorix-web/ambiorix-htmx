@@ -12,3 +12,4 @@ Here are the available examples:
 - [Show progress when using async](./show-progress-async/)
 - [Live-Search](./live-search/)
 - [Infinite Scroll](./infinite-scroll/)
+- [Contact.app](./contact.app/)
