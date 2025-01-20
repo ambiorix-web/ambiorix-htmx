@@ -22,6 +22,17 @@ contacts_table <- \(
 ) {
   type <- match.arg(arg = type)
 
+  if (is.null(data)) {
+    not_found <- tags$div(
+      id = "contacts_table",
+      tags$p(
+        class = "mt-5 text-center fw-bold",
+        "No matching contacts found :("
+      )
+    )
+    return(not_found)
+  }
+
   nrows <- nrow(data)
   data[["Action"]] <- lapply(
     X = seq_len(nrows),
@@ -29,6 +40,8 @@ contacts_table <- \(
       contact_table_action_btns(data = data[row_idx, ])
     }
   )
+
+  data[["id"]] <- NULL
 
   ncols <- ncol(data)
   row_names <- rownames(data)
@@ -47,10 +60,18 @@ contacts_table <- \(
 
       is_last_row <- identical(row_idx, nrows) && !is.null(next_page)
       hx_get <- if (is_last_row) paste0("/contacts?page=", next_page)
+      hx_include <- if (is_last_row) {
+        paste0(
+          "#",
+          c("first_name_pattern", "last_name_pattern", "phone_number_pattern", "email_address_pattern"),
+          collapse = ","
+        )
+      }
 
       tags$tr(
         class = "align-middle fw-light",
         `hx-get` = hx_get,
+        `hx-include` = hx_include,
         `hx-trigger` = "revealed",
         `hx-swap` = "afterend",
         `hx-indicator` = "#contacts-loading-spinner",

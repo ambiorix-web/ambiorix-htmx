@@ -59,9 +59,10 @@ modal_edit_contact <- \(data) {
     )
   )
 
+  base_ids <- c("first_name", "last_name", "phone_number", "email_address")
   input_ids <- paste0(
     "edit_contact_",
-    c("first_name", "last_name", "phone_number", "email_address"),
+    base_ids,
     "_",
     data_id
   )
@@ -123,6 +124,7 @@ modal_edit_contact <- \(data) {
     tags$form(
       class = "mb-0",
       `hx-put` = hx_put,
+      `hx-include` = paste0("#", base_ids, "_pattern", collapse = ", "),
       `hx-target` = "#contacts_table",
       `hx-swap` = "outerHTML",
       inputs,

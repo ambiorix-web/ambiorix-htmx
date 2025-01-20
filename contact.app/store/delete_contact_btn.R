@@ -70,12 +70,15 @@ modal_delete_contact <- \(data) {
   )
 
   hx_delete <- paste0("/contacts/", data[["id"]])
+  base_ids <- c("first_name", "last_name", "phone_number", "email_address")
+  hx_include <- paste0("#", base_ids, "_pattern", collapse = ", ")
 
   body <- tags$div(
     class = "modal-body",
     tags$form(
       class = "mb-0",
       `hx-delete` = hx_delete,
+      `hx-include` = hx_include,
       `hx-target` = "#contacts_table",
       `hx-swap` = "outerHTML",
       tags$p(
