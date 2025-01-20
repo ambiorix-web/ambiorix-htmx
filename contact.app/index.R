@@ -7,6 +7,7 @@ box::use(
   ],
   . / db[
     seed_db,
+    delete_db,
     read_contact,
     create_contact,
     update_contact,
@@ -14,6 +15,9 @@ box::use(
     read_all_contacts,
   ]
 )
+
+# seed the database:
+seed_db()
 
 #' Handle GET at '/'
 #'
@@ -196,7 +200,7 @@ error_handler <- \(req, res, error) {
   res$send("Internal Server Error :(")
 }
 
-Ambiorix$new(port = 5000L)$
+app <- Ambiorix$new(port = 5000L)$
   set_error(error_handler)$
   static("public", "assets")$
   get("/", home_get)$
@@ -204,5 +208,11 @@ Ambiorix$new(port = 5000L)$
   post("/contacts", contact_post)$
   put("/contacts/:id", contact_put)$
   delete("/contacts/:id", contact_delete)$
-  post("/search-contacts", contact_search)$
-  start()
+  post("/search-contacts", contact_search)
+
+# delete the db when server closes:
+app$on_stop <- \() {
+  delete_db()
+}
+
+app$start()

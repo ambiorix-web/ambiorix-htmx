@@ -54,6 +54,14 @@ seed_db <- \(n = 500L) {
   invisible()
 }
 
+#' Delete the database
+#'
+#' @return [unlink()]
+#' @export
+delete_db <- \() {
+  unlink(x = "contacts.sqlite")
+}
+
 #' Make connection to the database
 #'
 #' @return [DBI::dbConnect()]

@@ -2,6 +2,7 @@
 box::use(
   . / operations[
     seed_db,
+    delete_db,
     read_contact,
     delete_contact,
     update_contact,
