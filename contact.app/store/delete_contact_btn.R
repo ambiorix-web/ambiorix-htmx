@@ -24,8 +24,8 @@ delete_contact_btn <- \(data) {
 
 
   tagList(
-    btn,
-    modal_delete_contact(data = data)
+    modal_delete_contact(data = data),
+    btn
   )
 }
 
@@ -64,6 +64,7 @@ modal_delete_contact <- \(data) {
     tags$button(
       type = "submit",
       class = "btn btn-sm btn-success",
+      `data-bs-dismiss` = "modal",
       "Proceed"
     )
   )

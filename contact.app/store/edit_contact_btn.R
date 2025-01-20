@@ -111,6 +111,7 @@ modal_edit_contact <- \(data) {
     tags$button(
       type = "submit",
       class = "btn btn-sm btn-success",
+      `data-bs-dismiss` = "modal",
       "Save changes"
     )
   )

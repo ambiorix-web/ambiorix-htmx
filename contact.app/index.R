@@ -70,6 +70,56 @@ contact_post <- \(req, res) {
   res$send(html)
 }
 
+#' Handle PUT at '/contacts/:id'
+#'
+#' @export
+contact_put <- \(req, res) {
+  id <- req$params$id
+  new_field_names <- c("first_name", "last_name", "phone_number", "email_address")
+  field_names <- paste0("edit_contact_", new_field_names, "_", id)
+
+  body <- parse_req(
+    req = req,
+    fields_to_extract = field_names,
+    new_field_names = new_field_names
+  )
+
+  update_contact(
+    id = id,
+    new_first_name = body[["first_name"]],
+    new_last_name = body[["last_name"]],
+    new_phone_number = body[["phone_number"]],
+    new_email_address = body[["email_address"]]
+  )
+
+  data <- read_all_contacts(page = 1L)
+  html <- contacts_table(
+    data = data$filtered,
+    next_page = data$next_page,
+    type = "full"
+  )
+
+  res$send(html)
+}
+
+#' Handle DELETE at '/contacts/:id'
+#'
+#' @export
+contact_delete <- \(req, res) {
+  id <- req$params$id
+
+  delete_contact(id = id)
+
+  data <- read_all_contacts(page = 1L)
+  html <- contacts_table(
+    data = data$filtered,
+    next_page = data$next_page,
+    type = "full"
+  )
+
+  res$send(html)
+}
+
 #' Global error handler for app
 #'
 #' @param req The request object.
@@ -88,4 +138,6 @@ Ambiorix$new(port = 5000L)$
   get("/", home_get)$
   get("/contacts", contact_get)$
   post("/contacts", contact_post)$
+  put("/contacts/:id", contact_put)$
+  delete("/contacts/:id", contact_delete)$
   start()
