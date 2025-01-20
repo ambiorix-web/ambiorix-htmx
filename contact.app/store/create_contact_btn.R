@@ -98,7 +98,7 @@ modal_new_contact <- \() {
       `hx-post` = "/contacts",
       `hx-target` = "#contacts_table",
       `hx-swap` = "outerHTML",
-      `hx-on::afterRequest` = "this.reset()",
+      `hx-on::after-request` = "this.reset()",
       inputs,
       btns
     )
