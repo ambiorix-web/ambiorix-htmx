@@ -42,9 +42,11 @@ modal_new_contact <- \() {
     )
   )
 
+  base_ids <- c("first_name", "last_name", "phone_number", "email_address")
+
   input_ids <- paste0(
     "new_contact_",
-    c("first_name", "last_name", "phone_number", "email_address")
+    base_ids
   )
   types <- c("text", "text", "tel", "email")
   labels <- c("First Name", "Last Name", "Phone Number", "Email Address")
@@ -89,11 +91,13 @@ modal_new_contact <- \() {
     )
   )
 
+  hx_include <- paste0("#", base_ids, "_pattern", collapse = ", ")
   body <- tags$div(
     class = "modal-body",
     tags$form(
       class = "mb-0",
       `hx-post` = "/contacts",
+      `hx-include` = hx_include,
       `hx-target` = "#contacts_table",
       `hx-swap` = "outerHTML",
       `hx-on::after-request` = "this.reset()",
