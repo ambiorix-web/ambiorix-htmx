@@ -105,7 +105,8 @@ read_all_contacts <- \(
     name <- names(patterns)[[i]]
     value <- patterns[[i]]
 
-    if (identical(value, "")) {
+    is_empty <- identical(value, "") || identical(length(value), 0L)
+    if (is_empty) {
       next()
     }
 
