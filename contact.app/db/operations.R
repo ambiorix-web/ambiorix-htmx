@@ -176,6 +176,10 @@ read_all_contacts <- \(
   found <- dbFetch(res = res)
   dbClearResult(res)
 
+  row.names(found) <- as.character(
+    seq_len(nrow(found)) + offset
+  )
+
   list(
     filtered = found,
     next_page = next_page
