@@ -281,22 +281,14 @@ update_contact <- \(
   new_phone_number = NULL,
   new_email_address = NULL
 ) {
-  set_statements <- c(
-    if (!is.null(new_first_name)) {
-      "first_name = ?"
-    },
-    if (!is.null(new_last_name)) {
-      "last_name = ?"
-    },
-    if (!is.null(new_phone_number)) {
-      "phone_number = ?"
-    },
-    if (!is.null(new_email_address)) {
-      "email_address = ?"
-    }
+  new_details <- c(
+    "first_name" = new_first_name,
+    "last_name" = new_last_name,
+    "phone_number" = new_phone_number,
+    "email_address" = new_email_address
   )
 
-  if (is.null(set_statements)) {
+  if (is.null(new_details)) {
     return(
       read_contact(id = id)
     )
@@ -304,7 +296,7 @@ update_contact <- \(
 
   set_clause <- paste(
     "SET",
-    paste(set_statements, collapse = ", ")
+    paste(names(new_details), "= ?", collapse = ", ")
   )
 
   query <- paste("UPDATE contacts", set_clause, "WHERE id = ?")
