@@ -307,10 +307,6 @@ update_contact <- \(
     paste(set_statements, collapse = ", ")
   )
 
-  query <- "
-    UPDATE contacts
-    WHERE id = ?
-    "
   query <- paste("UPDATE contacts", set_clause, "WHERE id = ?")
 
   params <- c(
