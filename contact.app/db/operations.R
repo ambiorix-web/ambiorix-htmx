@@ -104,26 +104,27 @@ read_all_contacts <- \(
     phone_number = phone_number_pattern,
     email_address = email_address_pattern
   )
+  is_empty <- \(x) {
+    is.null(x) || identical(x, "")
+  }
+  wrap_in_percent <- \(x) {
+    paste0("%", x, "%")
+  }
+  patterns <- patterns |>
+    Filter(f = Negate(is_empty)) |>
+    lapply(FUN = wrap_in_percent)
 
-  where_conditions <- NULL
-  where_values <- list()
-  where_clause <- NULL
+  where_statements <- names(patterns) |>
+    lapply(FUN = paste, "LIKE ?") |>
+    unlist() |>
+    paste(collapse = " AND ") |>
+    Filter(f = nzchar)
 
-  for (i in seq_along(patterns)) {
-    name <- names(patterns)[[i]]
-    value <- patterns[[i]]
+  patterns <- unname(patterns)
 
-    is_empty <- identical(value, "") || identical(length(value), 0L)
-    if (is_empty) {
-      next()
-    }
-
-    statement <- paste0(name, " LIKE ?")
-    where_conditions <- c(where_conditions, statement)
-    where_values <- append(
-      x = where_values,
-      values = paste0("%", value, "%")
-    )
+  if (identical(length(patterns), 0L)) {
+    patterns <- NULL
+    where_statements <- NULL
   }
 
   query <- "
@@ -136,11 +137,9 @@ read_all_contacts <- \(
     FROM contacts
     "
 
-  if (!is.null(where_conditions)) {
-    where_clause <- paste(
-      "WHERE",
-      paste(where_conditions, collapse = " AND ")
-    )
+  where_clause <- NULL
+  if (!is.null(patterns)) {
+    where_clause <- paste("WHERE", where_statements)
     query <- paste(query, where_clause)
   }
 
@@ -153,8 +152,8 @@ read_all_contacts <- \(
     where_clause
   )
   res <- dbSendQuery(conn = conn, statement = count_query)
-  if (!is.null(where_conditions)) {
-    dbBind(res = res, params = where_values)
+  if (!is.null(patterns)) {
+    dbBind(res = res, params = patterns)
   }
   found <- dbFetch(res = res)
   dbClearResult(res)
@@ -179,8 +178,8 @@ read_all_contacts <- \(
   query <- paste(query, "LIMIT", limit, "OFFSET", offset)
 
   res <- dbSendQuery(conn = conn, statement = query)
-  if (!is.null(where_conditions)) {
-    dbBind(res = res, params = where_values)
+  if (!is.null(patterns)) {
+    dbBind(res = res, params = patterns)
   }
   found <- dbFetch(res = res)
   dbClearResult(res)
