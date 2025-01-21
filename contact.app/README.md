@@ -20,3 +20,21 @@ this example is a variation of that app, with all the said functionality.
 ## demo
 
 ![demo](./demo.png)
+
+## run app
+
+1. restore dependencies by firing up R and running this:
+
+    ```r
+    renv::restore()
+    ```
+
+2. `index.R` is the entry point. you can `source()` the file in an
+R session or run this in your terminal:
+
+    ```r
+    Rscript index.R
+    ```
+
+    that will start the web server. you can then visit [http://localhost:5000/](http://localhost:5000/) to
+    view the app.
