@@ -108,7 +108,6 @@ html_table <- \(
   row_names <- rownames(data)
   data <- as.list(data)
 
-
   table_records <- lapply(
     X = seq_len(nrows),
     FUN = \(row_idx) {
@@ -229,9 +228,6 @@ get_babynames <- \(req, res) {
     )
   )
 
-  # simulate a short delay so that spinner can be seen, lol:
-  Sys.sleep(0.5)
-
   res$send(html)
 }
 
@@ -247,9 +243,8 @@ error_handler <- \(req, res, error) {
   res$send("Internal Server Error :(")
 }
 
-Ambiorix$new(port = 5000L)$
-  set_error(error_handler)$
-  static("public", "assets")$
-  get("/", home_get)$
-  get("/babynames", get_babynames)$
-  start()
+app <- Ambiorix$new(port = 5000L)$set_error(error_handler)
+app$static("public", "assets")
+app$get("/", home_get)
+app$get("/babynames", get_babynames)
+app$start()
