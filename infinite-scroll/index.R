@@ -51,6 +51,29 @@ filter_babynames <- \(page = 1L, page_length = 15L) {
   )
 }
 
+#' Is app running in prod?
+#'
+#' @return Logical.
+in_prod <- \() {
+  identical(
+    Sys.getenv("APP_ENV"),
+    "prod"
+  )
+}
+
+#' Create an anchor tag's href
+#'
+#' @details If the application is running in prod, then the subpath is
+#' prefixed to the `href`.
+#' @param href String. 'href' attribute of an anchor tag. eg. "/about".
+#' @export
+create_href <- \(href) {
+  if (in_prod()) {
+    href <- paste0("/infinite-scroll", href)
+  }
+  href
+}
+
 #' Create a generic HTML page
 #'
 #' @param head [htmltools::tagList()] Tag list containing
@@ -73,13 +96,15 @@ html_page <- \(head = NULL, body = NULL) {
       ),
       tags$link(
         rel = "stylesheet",
-        href = "/assets/styles.css"
+        href = create_href("/assets/styles.css")
       ),
       tags$link(
         rel = "stylesheet",
-        href = "/assets/pico-2.0.6.min.css"
+        href = create_href("/assets/pico-2.0.6.min.css")
       ),
-      tags$script(src = "/assets/htmx-2.0.4.min.js"),
+      tags$script(
+        src = create_href("/assets/htmx-2.0.4.min.js")
+      ),
       head
     ),
     tags$body(body)
@@ -121,7 +146,11 @@ html_table <- \(
       )
 
       is_last_row <- identical(row_idx, nrows) && !is.null(next_page)
-      hx_get <- if (is_last_row) paste0("/babynames?page=", next_page)
+      hx_get <- if (is_last_row) {
+        create_href(
+          paste0("/babynames?page=", next_page)
+        )
+      }
 
       tags$tr(
         `hx-get` = hx_get,
