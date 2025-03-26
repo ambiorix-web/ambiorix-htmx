@@ -51,6 +51,44 @@ filter_babynames <- \(page = 1L, page_length = 15L) {
   )
 }
 
+#' Is app running in prod?
+#'
+#' @return Logical.
+in_prod <- \() {
+  identical(
+    Sys.getenv("APP_ENV"),
+    "prod"
+  )
+}
+
+#' Create an anchor tag's href attribute
+#'
+#' @description
+#' Generates the `href` for an anchor (`<a>`) tag. If the application is
+#' running in a production environment, the given `path` is prefixed to
+#' the `href` to ensure the correct base URL is used.
+#'
+#' @param href String. `href` attribute of an anchor tag (e.g., "/about").
+#' @param base_path String. Base path on which the app is deployed. eg.,
+#' if the app is deployed at `https://try.ambiorix.dev/infinite-scroll`,
+#' the environment variable `APP_BASE_PATH` should be set to `/infinite-scroll`.
+#' The default value is obtained from the `APP_BASE_PATH` environment variable,
+#' or it can be passed directly.
+#'
+#' @return String. The complete `href` for the anchor tag.
+#'
+#' @examples
+#' # In production, this may return "/infinite-scroll/about":
+#' create_href("/about")
+#'
+#' @export
+create_href <- \(href, base_path = Sys.getenv("APP_BASE_PATH")) {
+  if (in_prod()) {
+    href <- paste0(base_path, href)
+  }
+  href
+}
+
 #' Create a generic HTML page
 #'
 #' @param head [htmltools::tagList()] Tag list containing
@@ -73,13 +111,15 @@ html_page <- \(head = NULL, body = NULL) {
       ),
       tags$link(
         rel = "stylesheet",
-        href = "/assets/styles.css"
+        href = create_href("/assets/styles.css")
       ),
       tags$link(
         rel = "stylesheet",
-        href = "/assets/pico-2.0.6.min.css"
+        href = create_href("/assets/pico-2.0.6.min.css")
       ),
-      tags$script(src = "/assets/htmx-2.0.4.min.js"),
+      tags$script(
+        src = create_href("/assets/htmx-2.0.4.min.js")
+      ),
       head
     ),
     tags$body(body)
@@ -108,7 +148,6 @@ html_table <- \(
   row_names <- rownames(data)
   data <- as.list(data)
 
-
   table_records <- lapply(
     X = seq_len(nrows),
     FUN = \(row_idx) {
@@ -122,7 +161,11 @@ html_table <- \(
       )
 
       is_last_row <- identical(row_idx, nrows) && !is.null(next_page)
-      hx_get <- if (is_last_row) paste0("/babynames?page=", next_page)
+      hx_get <- if (is_last_row) {
+        create_href(
+          paste0("/babynames?page=", next_page)
+        )
+      }
 
       tags$tr(
         `hx-get` = hx_get,
@@ -229,9 +272,6 @@ get_babynames <- \(req, res) {
     )
   )
 
-  # simulate a short delay so that spinner can be seen, lol:
-  Sys.sleep(0.5)
-
   res$send(html)
 }
 
@@ -247,9 +287,8 @@ error_handler <- \(req, res, error) {
   res$send("Internal Server Error :(")
 }
 
-Ambiorix$new(port = 5000L)$
-  set_error(error_handler)$
-  static("public", "assets")$
-  get("/", home_get)$
-  get("/babynames", get_babynames)$
-  start()
+app <- Ambiorix$new(port = 5000L)$set_error(error_handler)
+app$static("public", "assets")
+app$get("/", home_get)
+app$get("/babynames", get_babynames)
+app$start()
