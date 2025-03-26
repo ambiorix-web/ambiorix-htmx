@@ -89,6 +89,28 @@ create_href <- \(href, base_path = Sys.getenv("APP_BASE_PATH")) {
   href
 }
 
+#' Create a route URL
+#'
+#' Constructs a route URL by appending the specified route to the
+#' base path. In a production environment, the base path can be specified via
+#' the `APP_BASE_PATH` environment variable.
+#'
+#' @param route String. The specific route to be appended. eg. "/about"
+#' @param base_path String. Base path to prepend to the route.
+#' Defaults to the value of the `APP_BASE_PATH` environment variable.
+#'
+#' @return String. The full URL to the route, including the base path.
+#'
+#' @examples
+#' # In production, this may return "/infinite-scroll/home":
+#' create_route("/home")
+create_route <- \(route, base_path = Sys.getenv("APP_BASE_PATH")) {
+  if (in_prod()) {
+    route <- paste0(base_path, route)
+  }
+  route
+}
+
 #' Create a generic HTML page
 #'
 #' @param head [htmltools::tagList()] Tag list containing
@@ -289,6 +311,6 @@ error_handler <- \(req, res, error) {
 
 app <- Ambiorix$new(port = 5000L)$set_error(error_handler)
 app$static("public", "assets")
-app$get("/", home_get)
-app$get("/babynames", get_babynames)
+app$get(create_route("/"), home_get)
+app$get(create_route("/babynames"), get_babynames)
 app$start()
