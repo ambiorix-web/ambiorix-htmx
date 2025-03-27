@@ -120,6 +120,7 @@ html_page <- \(head = NULL, body = NULL) {
       tags$script(
         src = create_href("/assets/htmx-2.0.4.min.js")
       ),
+      tags$title("Infinite Scroll"),
       head
     ),
     tags$body(body)
