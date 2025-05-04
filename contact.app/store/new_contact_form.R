@@ -1,5 +1,6 @@
 box::use(
   htmltools[tags, tagList],
+  . / create_href[create_href],
 )
 
 #' New contact form
@@ -41,7 +42,10 @@ new_contact_form <- \() {
         input
       )
     },
-    ids, types, labels, placeholders
+    ids,
+    types,
+    labels,
+    placeholders
   )
 
   btns <- tags$div(
@@ -59,7 +63,7 @@ new_contact_form <- \() {
   )
 
   tags$form(
-    `hx-post` = "/contacts",
+    `hx-post` = create_href(href = "/contacts"),
     `hx-target` = "#contacts_table",
     `hx-swap` = "outerHTML",
     `hx-on::after-request` = "this.reset()",

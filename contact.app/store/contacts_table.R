@@ -1,6 +1,7 @@
 box::use(
   tools[toTitleCase],
   htmltools[tags, tagList],
+  . / create_href[create_href],
   . / contact_table_action_btns[contact_table_action_btns],
 )
 
@@ -59,11 +60,20 @@ contacts_table <- \(
       )
 
       is_last_row <- identical(row_idx, nrows) && !is.null(next_page)
-      hx_get <- if (is_last_row) paste0("/contacts?page=", next_page)
+      hx_get <- if (is_last_row) {
+        create_href(
+          href = paste0("/contacts?page=", next_page)
+        )
+      }
       hx_include <- if (is_last_row) {
         paste0(
           "#",
-          c("first_name_pattern", "last_name_pattern", "phone_number_pattern", "email_address_pattern"),
+          c(
+            "first_name_pattern",
+            "last_name_pattern",
+            "phone_number_pattern",
+            "email_address_pattern"
+          ),
           collapse = ","
         )
       }

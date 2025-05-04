@@ -1,5 +1,6 @@
 box::use(
   htmltools[tags, tagList],
+  . / create_href[create_href],
 )
 
 #' Create search input fields for contacts table
@@ -35,7 +36,7 @@ contact_search_fields <- \() {
         id = id,
         class = "form-control form-control-sm",
         type = "search",
-        `hx-post` = "/search-contacts",
+        `hx-post` = create_href(href = "/search-contacts"),
         `hx-include` = hx_include,
         `hx-target` = "#contacts_table",
         `hx-swap` = "outerHTML",

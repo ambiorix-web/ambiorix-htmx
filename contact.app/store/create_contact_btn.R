@@ -1,5 +1,6 @@
 box::use(
   htmltools[tags, tagList],
+  . / create_href[create_href],
 )
 
 #' Create new contact button
@@ -73,7 +74,9 @@ modal_new_contact <- \() {
         input
       )
     },
-    input_ids, types, labels
+    input_ids,
+    types,
+    labels
   )
 
   btns <- tags$div(
@@ -96,7 +99,7 @@ modal_new_contact <- \() {
     class = "modal-body",
     tags$form(
       class = "mb-0",
-      `hx-post` = "/contacts",
+      `hx-post` = create_href(href = "/contacts"),
       `hx-include` = hx_include,
       `hx-target` = "#contacts_table",
       `hx-swap` = "outerHTML",

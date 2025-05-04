@@ -1,5 +1,6 @@
 box::use(
   htmltools[tags, tagList],
+  . / create_href[create_href],
 )
 
 #' Edit contact button
@@ -27,7 +28,6 @@ edit_contact_btn <- \(data) {
     tags$i(class = "bi bi-pencil-square"),
     "Edit"
   )
-
 
   tagList(
     btn,
@@ -98,7 +98,10 @@ modal_edit_contact <- \(data) {
         input
       )
     },
-    input_ids, values, types, labels
+    input_ids,
+    values,
+    types,
+    labels
   )
 
   btns <- tags$div(
@@ -117,7 +120,9 @@ modal_edit_contact <- \(data) {
     )
   )
 
-  hx_put <- paste0("/contacts/", data[["id"]])
+  hx_put <- create_href(
+    href = paste0("/contacts/", data[["id"]])
+  )
 
   body <- tags$div(
     class = "modal-body",

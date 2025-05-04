@@ -1,5 +1,6 @@
 box::use(
   htmltools[tags, tagList],
+  . / create_href[create_href],
 )
 
 #' Delete contact button
@@ -21,7 +22,6 @@ delete_contact_btn <- \(data) {
     tags$i(class = "bi bi-trash3"),
     "Delete"
   )
-
 
   tagList(
     modal_delete_contact(data = data),
@@ -69,7 +69,9 @@ modal_delete_contact <- \(data) {
     )
   )
 
-  hx_delete <- paste0("/contacts/", data[["id"]])
+  hx_delete <- create_href(
+    href = paste0("/contacts/", data[["id"]])
+  )
   base_ids <- c("first_name", "last_name", "phone_number", "email_address")
   hx_include <- paste0("#", base_ids, "_pattern", collapse = ", ")
 

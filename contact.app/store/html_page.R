@@ -1,5 +1,6 @@
 box::use(
   htmltools[tags],
+  . / create_href[create_href],
 )
 
 #' Create a generic HTML page
@@ -21,16 +22,18 @@ html_page <- \(head = NULL, body = NULL) {
       tags$title("Contact.app"),
       tags$link(
         rel = "stylesheet",
-        href = "/assets/bootstrap-5.3.3.min.css"
+        href = create_href(href = "/assets/bootstrap-5.3.3.min.css")
       ),
       tags$link(
         rel = "stylesheet",
-        href = "/assets/bootstrap-icons-1.11.3/bootstrap-icons.min.css"
+        href = create_href(
+          href = "/assets/bootstrap-icons-1.11.3/bootstrap-icons.min.css"
+        )
       ),
-      tags$script(src = "/assets/htmx-2.0.4.min.js"),
+      tags$script(src = create_href(href = "/assets/htmx-2.0.4.min.js")),
       tags$link(
         rel = "stylesheet",
-        href = "/assets/styles.css"
+        href = create_href(href = "/assets/styles.css")
       ),
       head
     ),
@@ -38,7 +41,9 @@ html_page <- \(head = NULL, body = NULL) {
       class = "raleway",
       `hx-encoding` = "multipart/form-data",
       body,
-      tags$script(src = "/assets/bootstrap-5.3.3.bundle.min.js")
+      tags$script(
+        src = create_href(href = "/assets/bootstrap-5.3.3.bundle.min.js")
+      )
     )
   )
 }
