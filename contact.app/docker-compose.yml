@@ -1,0 +1,6 @@
+services:
+  contact-app:
+    image: contact-app
+    ports:
+      - "127.0.0.1:3002:5000"
+    restart: unless-stopped
