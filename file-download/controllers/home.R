@@ -8,21 +8,21 @@ box::use(
   ambiorix[parse_multipart],
   .. / store / home[home_page],
   .. / store / components / card[card],
-  .. / templates / template_path[template_path],
-  .. / store / components / datatable[datatable, datatable_options],
+  .. /
+    store /
+    components /
+    datatable[
+      datatable,
+      datatable_options,
+    ],
+  .. / helpers / create_href[create_href],
 )
 
 #' Handle GET at '/'
 #'
 #' @export
 home_get <- \(req, res) {
-  res$render(
-    template_path("page.html"),
-    list(
-      title = "File Download",
-      content = home_page()
-    )
-  )
+  res$send(home_page())
 }
 
 #' Handle GET at '/dataset'
@@ -41,12 +41,22 @@ show_dataset <- \(req, res) {
         col_names = names(dataset),
         table_id = paste0(dataset_name, "data"),
         # send a GET request to "/data/:dataset_name":
-        ajax = paste0("/data/", dataset_name),
+        ajax = create_href(
+          href = paste0(
+            "/data/",
+            dataset_name
+          )
+        ),
         !!!datatable_options
       )
     ),
     tags$a(
-      href = paste0("/download/", dataset_name),
+      href = create_href(
+        href = paste0(
+          "/download/",
+          dataset_name
+        )
+      ),
       class = "btn btn-dark btn-sm rounded-1",
       tags$i(class = "bi bi-download"),
       "Download"

@@ -1,6 +1,6 @@
 box::use(
   htmltools[tags, tagList],
-  .. / .. / helpers / to_json[to_json]
+  .. / .. / helpers / to_json[to_json],
 )
 
 #' Generate html to create a datatable
