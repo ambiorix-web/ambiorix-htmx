@@ -13,18 +13,65 @@ mtcars$model <- rownames(mtcars)
 new_col_order <- c("model", nms)
 mtcars <- mtcars[, new_col_order]
 
+#' Is app running in prod?
+#'
+#' @return Logical.
+in_prod <- function() {
+  identical(
+    Sys.getenv("APP_ENV"),
+    "prod"
+  )
+}
+
+#' Create an anchor tag's href attribute
+#'
+#' @description
+#' Generates the `href` for an anchor (`<a>`) tag. If the application is
+#' running in a production environment, the given `path` is prefixed to
+#' the `href` to ensure the correct base URL is used.
+#'
+#' @param href String /// Required. `href` attribute of an anchor tag (e.g., "/about").
+#' @param base_path String /// Optional. Base path on which the app is deployed. eg.,
+#' if the app is deployed at `https://try.ambiorix.dev/infinite-scroll`,
+#' the environment variable `APP_BASE_PATH` should be set to `/infinite-scroll`.
+#' The default value is obtained from the `APP_BASE_PATH` environment variable,
+#' or it can be passed directly.
+#'
+#' @return String. The complete `href` for the anchor tag.
+#'
+#' @examples
+#' # In production, this may return "/infinite-scroll/about":
+#' create_href("/about")
+#'
+#' @export
+create_href <- function(
+  href,
+  base_path = Sys.getenv("APP_BASE_PATH")
+) {
+  if (in_prod()) {
+    href <- paste0(base_path, href)
+  }
+
+  href
+}
+
 #' Generic html page
 #'
-#' @param head_tags [htmltools::tagList()] containing tags
+#' @param head_tags [htmltools::tagList()] /// Optional. Tags
 #' to include in the head of the html document.
-#' @param body [htmltools::tagList()] containing tags to
+#' @param body [htmltools::tagList()] /// Optional. Tags to
 #' include in the body of the html document.
 #' @export
-page <- \(head_tags = NULL, body = NULL) {
+page <- function(
+  head_tags = NULL,
+  body = NULL
+) {
   tags$html(
     tags$head(
       head_tags,
-      tags$script(src = "/assets/htmx-2.0.4.min.js")
+      tags$script(
+        src = create_href(href = "/assets/htmx-2.0.4.min.js")
+      )
     ),
     tags$body(
       body
@@ -35,12 +82,12 @@ page <- \(head_tags = NULL, body = NULL) {
 #' Home page
 #'
 #' @export
-home_page <- \() {
+home_page <- function() {
   input <- tags$input(
     type = "search",
     name = "search",
     placeholder = "Search car model...",
-    `hx-get` = "/search",
+    `hx-get` = create_href(href = "/search"),
     `hx-trigger` = "input changed delay:500ms, keyup[key=='Enter'], load",
     `hx-target` = "#search-results"
   )
@@ -69,10 +116,10 @@ home_page <- \() {
 
 #' Create html table rows
 #'
-#' @param data data.frame or list object to use.
+#' @param data data.frame or list object /// Required.
 #' @return [htmltools::tagList()]
 #' @export
-create_table_rows <- \(data) {
+create_table_rows <- function(data) {
   data <- as.list(data)
 
   if (identical(length(data), 0L)) {
@@ -101,12 +148,12 @@ create_table_rows <- \(data) {
 
 #' Search for car model
 #'
-#' @param pattern String. Pattern to search for
+#' @param pattern String /// Optional. Pattern to search for
 #' in the column 'model' of mtcars.
 #' Defaults to `NULL`.
 #' @export
-search_mtcars <- \(pattern = NULL) {
-  if (is.null(pattern)) {
+search_mtcars <- function(pattern = NULL) {
+  if (is.null(pattern) || is.na(pattern)) {
     return(mtcars)
   }
 
@@ -135,21 +182,10 @@ search_get <- \(req, res) {
   res$send(html)
 }
 
-#' Error handler for app
-#'
-#' @param req The request object.
-#' @param res The response object.
-#' @param error The error object. See [stop()].
-#' @export
-error_handler <- \(req, res, error) {
-  message(conditionMessage(error))
-  res$status <- 500L
-  res$send("Internal Server Error :(")
-}
+app <- Ambiorix$new(port = 8000L)
+app$static("public", "assets")
 
-Ambiorix$new(port = 8000L)$
-  set_error(error_handler)$
-  static("public", "assets")$
-  get("/", home_get)$
-  get("/search", search_get)$
-  start()
+app$get("/", home_get)
+app$get("/search", search_get)
+
+app$start()
