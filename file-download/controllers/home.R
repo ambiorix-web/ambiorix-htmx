@@ -92,7 +92,7 @@ get_data <- \(req, res) {
 
   # perform search:
   search_res <- dataset
-  if (!is.null(search_value)) {
+  if (!is.null(search_value) && !is.na(search_value)) {
     # search the value in every column:
     found <- lapply(dataset, \(cl) {
       grepl(pattern = search_value, x = cl, ignore.case = TRUE)
